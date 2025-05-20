@@ -4,7 +4,7 @@
 
     How to run the program?
     -Create a grammar and statement file
-    -Provide their name to the program (has to be in the same directory in the .exe file)
+    -Provide their name to the program (has to be in the same directory with the .exe file)
     -It will detect if the provided statement is valid or not, according to the grammer.
 
     Any feedback will be appreciated
