@@ -4,32 +4,6 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-#define CLEAN_AND_COPY_TO_VAL_ARRAY(dest_array, source_segment_start, source_segment_length)                                    \
-    do{                                                                                                                         \
-        const char *macro_src_ptr = (source_segment_start);                                                                     \
-        int macro_src_len = (source_segment_length);                                                                            \
-        const char *macro_current_ptr = macro_src_ptr;                                                                          \
-        const char *macro_segment_end_ptr = macro_src_ptr + macro_src_len;                                                      \
-        while (macro_current_ptr < macro_segment_end_ptr && isspace((unsigned char)*macro_current_ptr))                         \
-        {                                                                                                                       \
-            macro_current_ptr++;                                                                                                \
-        }                                                                                                                       \
-        const char *macro_actual_content_end_ptr = macro_segment_end_ptr;                                                       \
-        while (macro_actual_content_end_ptr > macro_current_ptr && isspace((unsigned char)*(macro_actual_content_end_ptr - 1))) \
-        {                                                                                                                       \
-            macro_actual_content_end_ptr--;                                                                                     \
-        }                                                                                                                       \
-        int macro_cleaned_len = macro_actual_content_end_ptr - macro_current_ptr;                                               \
-        if (macro_cleaned_len < 0)                                                                                              \
-            macro_cleaned_len = 0;                                                                                              \
-        int macro_len_to_copy = (macro_cleaned_len < 15) ? macro_cleaned_len : 15;                                              \
-        if (macro_len_to_copy > 0)                                                                                              \
-        {                                                                                                                       \
-            strncpy((dest_array), macro_current_ptr, macro_len_to_copy);                                                        \
-        }                                                                                                                       \
-        (dest_array)[macro_len_to_copy] = '\0';                                                                                 \
-    } while (0)
-
 struct StringGroupNode
 {
     char *groupValue;
@@ -50,6 +24,7 @@ struct head
     struct grammer *gr;
 };
 
+//Removes Spaces - NO AI
 void remove_spaces(char *s)
 {
     char *d = s;
@@ -63,10 +38,10 @@ void remove_spaces(char *s)
     } while ((*current_s++ = *d++));
 }
 
-void fileNameObtain(char fileName[64])
-{
+//Obtains File Name - NO AI
+void fileNameObtain(char fileName[64]){
     printf("Enter File Name: ");
-    if (scanf("%63s", fileName) == 1)
+    if (scanf("%s", fileName) == 1)
     {
         if (strlen(fileName) < 64 - strlen(".txt") - 1)
         {
@@ -86,30 +61,25 @@ void fileNameObtain(char fileName[64])
             fileName[0] = '\0';
         }
         int c;
-        while ((c = getchar()) != '\n' && c != EOF)
-            ;
+        while ((c = getchar()) != '\n' && c != EOF);
     }
 }
 
-int ftprVaild(char fileName[64])
-{
+//Checks if ftpr valid and creates file if no file is found. - NO AI
+int ftprVaild(char fileName[64]){
     FILE *local_ftpr = fopen(fileName, "r");
-    if (local_ftpr != NULL)
-    {
+    if (local_ftpr != NULL){
         fclose(local_ftpr);
         return 0;
     }
 
-    while (1)
-    {
+    while (1){
         int selection = -1;
         printf("\nThe file named '%s' was not found. Do you want to create this file? (Yes: 1, No: 0): ", fileName);
 
-        if (scanf("%d", &selection) == 1)
-        {
+        if (scanf("%d", &selection) == 1){
             int c;
-            while ((c = getchar()) != '\n' && c != EOF)
-                ;
+            while ((c = getchar()) != '\n' && c != EOF);
 
             switch (selection)
             {
@@ -131,18 +101,16 @@ int ftprVaild(char fileName[64])
                 printf("\nInvalid input! Please enter 0 or 1.\n");
             }
         }
-        else
-        {
+        else{
             printf("\nInvalid input format! Please enter a number (0 or 1).\n");
             int c;
-            while ((c = getchar()) != '\n' && c != EOF)
-                ;
+            while ((c = getchar()) != '\n' && c != EOF);
         }
     }
 }
 
-void freeStringGroupList(struct StringGroupNode *node)
-{
+//Frees string group list. - AI but I would write it the same.
+void freeStringGroupList(struct StringGroupNode *node){
     struct StringGroupNode *current = node;
     while (current != NULL)
     {
@@ -156,6 +124,7 @@ void freeStringGroupList(struct StringGroupNode *node)
     }
 }
 
+//Frees grammar list. - AI but I would write it the same.
 void freeGrammarList(struct head *headNode)
 {
     struct head *currentHead = headNode;
@@ -174,36 +143,63 @@ void freeGrammarList(struct head *headNode)
     }
 }
 
-struct head *parseGrammer(const char *filename)
-{
-    if (filename == NULL || filename[0] == '\0')
-    {
+//Cleans the line of grammer - AI Created
+void clean_and_copy_to_val_array(char *dest_array, const char *source_segment_start, int source_segment_length) {
+    if (dest_array == NULL)
+        return;
+
+    if (source_segment_start == NULL || source_segment_length <= 0) {
+        dest_array[0] = '\0';
+        return;
+    }
+
+    const char *current_ptr = source_segment_start;
+    const char *segment_end_char_ptr = source_segment_start + source_segment_length;
+
+    while (current_ptr < segment_end_char_ptr && isspace((unsigned char)*current_ptr))
+        current_ptr++;
+
+    while (segment_end_char_ptr > current_ptr && isspace((unsigned char)*(segment_end_char_ptr - 1)))
+        segment_end_char_ptr--;
+
+    int cleaned_len = segment_end_char_ptr - current_ptr;
+    const int max_copy_len = 15;
+    int len_to_copy = (cleaned_len > max_copy_len) ? max_copy_len : cleaned_len;
+
+    if (len_to_copy > 0)
+        memcpy(dest_array, current_ptr, len_to_copy);
+    
+    dest_array[len_to_copy] = '\0';
+}
+
+//Parses Grammer (duh) - Some AI (Mostly me)
+struct head *parseGrammer(const char *filename){
+    //Safety checks
+    if (filename == NULL || filename[0] == '\0'){
         fprintf(stderr, "Error: Filename is NULL or empty.\n");
         return NULL;
     }
 
     FILE *file = fopen(filename, "r");
-    if (file == NULL)
-    {
+    if (file == NULL){
         perror("Error opening grammar file");
         fprintf(stderr, "Filename was: %s\n", filename);
         return NULL;
     }
 
-    char line_buffer[512];
+    //Initilazes the varables.
+    char line_buffer[256] = {'\0'};
     struct head *master_list_head = NULL;
     struct head *master_list_tail = NULL;
     int memory_error_flag = 0;
 
-    while (fgets(line_buffer, sizeof(line_buffer), file) != NULL)
-    {
-        if (memory_error_flag)
-        {
+    while (fgets(line_buffer, sizeof(line_buffer), file)){
+        //If memory throws error, it will terminate the function.
+        if (memory_error_flag){
             break;
         }
 
-        line_buffer[strcspn(line_buffer, "\n\r")] = '\0';
-
+        //Checks if the line has '>' symbol, throws the error accordingly - AI Created but I would write it the same
         const char *production_arrow = strchr(line_buffer, '>');
         if (production_arrow == NULL)
         {
@@ -223,19 +219,22 @@ struct head *parseGrammer(const char *filename)
             continue;
         }
 
+        //Creates head for grammar part and checks if the memory is allocated accordingly.
         struct head *current_parsed_head = (struct head *)malloc(sizeof(struct head));
-        if (current_parsed_head == NULL)
-        {
+        if (current_parsed_head == NULL){
             perror("Error: Malloc failed for head structure");
             memory_error_flag = 1;
             break;
         }
+
+        //Initilazes the head for the grammar.
         current_parsed_head->val[0] = '\0';
         current_parsed_head->gr = NULL;
         current_parsed_head->nextHead = NULL;
 
+        
         int head_val_src_len = production_arrow - line_buffer;
-        CLEAN_AND_COPY_TO_VAL_ARRAY(current_parsed_head->val, line_buffer, head_val_src_len);
+        clean_and_copy_to_val_array(current_parsed_head->val, line_buffer, head_val_src_len);
 
         const char *productions_full_string = production_arrow + 1;
         const char *current_production_segment_start = productions_full_string;
@@ -270,7 +269,7 @@ struct head *parseGrammer(const char *filename)
             new_gram_node->next = NULL;
             new_gram_node->Head = current_parsed_head;
 
-            CLEAN_AND_COPY_TO_VAL_ARRAY(new_gram_node->val, current_production_segment_start, current_production_len);
+            clean_and_copy_to_val_array(new_gram_node->val, current_production_segment_start, current_production_len);
 
             if (grammar_list_for_this_head == NULL)
             {
@@ -329,8 +328,8 @@ struct head *parseGrammer(const char *filename)
     return master_list_head;
 }
 
-void printGrammarList(struct head *absHead)
-{
+//Prints grammar list - All AI - No need to rewrite since the function does not effect the flow of program
+void printGrammarList(struct head *absHead){
     struct head *current_head_node = absHead;
     int rule_counter = 1;
 
@@ -374,36 +373,8 @@ void printGrammarList(struct head *absHead)
     printf("==============================\n");
 }
 
-struct head *findFirstHeadMatchingAnyGroup(struct StringGroupNode *groupsList, struct head *grammarHeadsList)
-{
-    if (groupsList == NULL || grammarHeadsList == NULL)
-    {
-        return NULL;
-    }
-
-    struct StringGroupNode *currentGroup = groupsList;
-    while (currentGroup != NULL)
-    {
-        if (currentGroup->groupValue != NULL)
-        {
-            const char *searchTerm = currentGroup->groupValue;
-            struct head *currentHead = grammarHeadsList;
-            while (currentHead != NULL)
-            {
-                if (strcmp(currentHead->val, searchTerm) == 0)
-                {
-                    return currentHead;
-                }
-                currentHead = currentHead->nextHead;
-            }
-        }
-        currentGroup = currentGroup->next;
-    }
-    return NULL;
-}
-
-struct head *searchHeadByValue(struct head *listHead, const char *searchTerm)
-{
+//Searches through heads to find if the part of the statement matches any head - AI Generated - Will rewrite
+struct head *searchHeadByValue(struct head *listHead, const char *searchTerm){
     if (searchTerm == NULL || listHead == NULL)
     {
         return NULL;
@@ -421,8 +392,8 @@ struct head *searchHeadByValue(struct head *listHead, const char *searchTerm)
     return NULL;
 }
 
-static struct StringGroupNode *groupStringBySpaces(const char *inputString)
-{
+//Adds arguments to the string group nodes - AI Generated - Will rewrite
+static struct StringGroupNode *groupStringBySpaces(const char *inputString){
     if (inputString == NULL)
     {
         return NULL;
@@ -489,25 +460,7 @@ static struct StringGroupNode *groupStringBySpaces(const char *inputString)
     return list_head;
 }
 
-static struct head *findHeadByValue(struct head *listHead, const char *searchTerm)
-{
-    if (searchTerm == NULL || listHead == NULL)
-    {
-        return NULL;
-    }
-
-    struct head *currentNode = listHead;
-    while (currentNode != NULL)
-    {
-        if (strcmp(currentNode->val, searchTerm) == 0)
-        {
-            return currentNode;
-        }
-        currentNode = currentNode->nextHead;
-    }
-    return NULL;
-}
-
+//I have no fucking idea what the fuck that this function does - AI Generated (Of course) - Will rewrite ASAP
 static int tryParseSymbolRecursive(const char *symbolToParse, struct StringGroupNode **currentTokenNodePtr, struct head *fullGrammar)
 {
     if (symbolToParse == NULL)
@@ -521,7 +474,7 @@ static int tryParseSymbolRecursive(const char *symbolToParse, struct StringGroup
         return 0;
     }
 
-    struct head *ruleForSymbol = findHeadByValue(fullGrammar, symbolToParse);
+    struct head *ruleForSymbol = searchHeadByValue(fullGrammar, symbolToParse);
 
     if (ruleForSymbol != NULL)
     {
@@ -598,8 +551,8 @@ static int tryParseSymbolRecursive(const char *symbolToParse, struct StringGroup
     }
 }
 
-void validateStatementsFromFile(struct head *grammarRules, const char *statementFileName)
-{
+//Validates Statements - AI Generated - Will rewrite
+void validateStatementsFromFile(struct head *grammarRules, const char *statementFileName){
     if (grammarRules == NULL)
     {
         fprintf(stderr, "Error: Grammar rules are NULL. Cannot validate statements.\n");
@@ -685,8 +638,7 @@ void validateStatementsFromFile(struct head *grammarRules, const char *statement
     fclose(statementsFile);
 }
 
-int main()
-{
+int main(){
     char grammarFile[64] = "asd.txt";
     char statementFile[64] = "stmnt.txt";
     int valid; // This variable is part of the commented out section
@@ -695,35 +647,30 @@ int main()
 
     printf("--- Grammar File Setup ---\n");
     fileNameObtain(grammarFile);
-    if (grammarFile[0] == '\0')
-    {
+    if (grammarFile[0] == '\0'){
         printf("No valid filename for grammar obtained. Exiting.\n");
         return -1;
     }
     valid = ftprVaild(grammarFile); // 'valid' would need to be declared if this is uncommented
-    if (valid == -1)
-    {
+    if (valid == -1){
         return -1;
     }
 
     printf("\n--- Statement File Setup ---\n");
     fileNameObtain(statementFile);
-    if (statementFile[0] == '\0')
-    {
+    if (statementFile[0] == '\0'){
         printf("No valid filename for statement obtained. Exiting.\n");
         return -1;
     }
     valid = ftprVaild(statementFile); // 'valid' would need to be declared if this is uncommented
-    if (valid == -1)
-    {
+    if (valid == -1){
         return -1;
     }
 
     printf("\nParsing grammar from: %s\n", grammarFile);
     absHeadPtr = parseGrammer(grammarFile);
 
-    if (absHeadPtr == NULL)
-    {
+    if (absHeadPtr == NULL){
         printf("Error parsing grammar from file '%s' or the file is empty/invalid. Exiting.\n", grammarFile);
         return -1;
     }
@@ -731,12 +678,10 @@ int main()
     printGrammarList(absHeadPtr);
     printf("\n\n");
 
-    if (statementFile[0] == '\0')
-    {
+    if (statementFile[0] == '\0'){
         printf("Statement file name is empty. Skipping validation.\n");
     }
-    else
-    {
+    else{
         validateStatementsFromFile(absHeadPtr, statementFile);
     }
 
